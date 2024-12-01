@@ -1,7 +1,7 @@
 import kotlin.math.abs
 
 fun main() {
-    fun part1(input: List<String>): Int {
+    fun createLists(input: List<String>): Pair<MutableList<Int>, MutableList<Int>> {
         val firstList: MutableList<Int> = mutableListOf()
         val secondList: MutableList<Int> = mutableListOf()
         input.forEach {
@@ -9,6 +9,11 @@ fun main() {
             firstList.add(parts.first().toInt())
             secondList.add(parts.last().toInt())
         }
+        return Pair(firstList, secondList)
+    }
+
+    fun part1(input: List<String>): Int {
+        val (firstList, secondList) = createLists(input)
         firstList.sort()
         secondList.sort()
         return firstList.zip(secondList).fold(0){ acc, pair ->
@@ -18,24 +23,15 @@ fun main() {
     }
 
     fun part2(input: List<String>): Int {
-        val firstList: MutableList<Int> = mutableListOf()
-        val secondList: MutableList<Int> = mutableListOf()
-        input.forEach {
-            val parts = it.split(" ")
-            firstList.add(parts.first().toInt())
-            secondList.add(parts.last().toInt())
-        }
+        val (firstList, secondList) = createLists(input)
         return firstList.fold(0){ acc, first ->
             val occ = secondList.count{ it == first} * first
             acc + occ
         }
     }
 
-    // Or read a large test input from the `src/Day01_test.txt` file:
     val testInput = readInput("test/Day01")
     check(part1(testInput) == 11)
-
-    // Or read a large test input from the `src/Day01_test.txt` file:
     check(part2(testInput) == 31)
 
     // Read the input from the `src/Day01.txt` file.
