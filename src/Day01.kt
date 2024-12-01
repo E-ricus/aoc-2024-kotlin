@@ -1,22 +1,16 @@
 import kotlin.math.abs
 
 fun main() {
-    fun createLists(input: List<String>): Pair<MutableList<Int>, MutableList<Int>> {
-        val firstList: MutableList<Int> = mutableListOf()
-        val secondList: MutableList<Int> = mutableListOf()
-        input.forEach {
+    fun createLists(input: List<String>): Pair<List<Int>, List<Int>> {
+        return input.map {
             val parts = it.split(" ")
-            firstList.add(parts.first().toInt())
-            secondList.add(parts.last().toInt())
-        }
-        return Pair(firstList, secondList)
+            parts.first().toInt() to parts.last().toInt()
+        }.unzip()
     }
 
     fun part1(input: List<String>): Int {
         val (firstList, secondList) = createLists(input)
-        firstList.sort()
-        secondList.sort()
-        return firstList.zip(secondList).fold(0){ acc, pair ->
+        return firstList.sorted().zip(secondList.sorted()).fold(0){ acc, pair ->
             val diff: Int = pair.first - pair.second
             acc + abs(diff)
         }
@@ -24,9 +18,9 @@ fun main() {
 
     fun part2(input: List<String>): Int {
         val (firstList, secondList) = createLists(input)
-        return firstList.fold(0){ acc, first ->
-            val occ = secondList.count{ it == first} * first
-            acc + occ
+        val occurrences = secondList.groupingBy { it }.eachCount()
+        return firstList.sumOf{ num ->
+            occurrences.getOrDefault(num, 0) * num
         }
     }
 
