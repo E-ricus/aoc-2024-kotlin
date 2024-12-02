@@ -1,35 +1,33 @@
 fun main() {
-    fun calculateLevel(level: List<String>): Boolean {
+    fun levelIsSafe(level: List<Int>): Boolean {
         var isInc: Boolean? = null
-        return level.mapIndexed { i, c ->
-            val next = level.getOrNull(i + 1)?.toIntOrNull() ?: 0
-            val current = c.toInt()
+        return level.zipWithNext { current, next ->
             if (isInc == null) {
                 isInc = current > next
             }
-            val finished = (i + 1 == level.size)
             val increasing = current > next && (current - next) in 1..3
             val decreasing = current < next && (next - current) in 1..3
-            val correct = if (isInc == true) increasing else decreasing
-            finished || correct
+            if (isInc == true) increasing else decreasing
         }.all { it }
     }
 
     fun part1(input: List<String>): Int {
         return input.map { l ->
-            val level = l.split(" ")
-            calculateLevel(level)
+            val level = l.split(" ").map { it.toInt() }
+            levelIsSafe(level)
         }.count { it }
     }
 
     fun part2(input: List<String>): Int {
         return input.map { l ->
-            val level = l.split(" ")
-            List(level.size) { ie ->
-                val changedLevel = level.toMutableList()
-                changedLevel.removeAt(ie)
-                calculateLevel(changedLevel)
-            }.any { it }
+            val level = l.split(" ").map { it.toInt() }
+            var safe = false
+            for(i in 0..level.lastIndex) {
+                val changedLevel = level.toMutableList().apply { removeAt(i) }
+                safe = levelIsSafe(changedLevel)
+                if(safe) break
+            }
+            safe
         }.count { it }
     }
 
