@@ -1,41 +1,26 @@
 fun main() {
     fun part1(input: String): Int {
-        val matches = "(?<=^|\\W|)mul\\(\\d{1,3},\\d{1,3}\\)".toRegex().findAll(input)
+        val matches = """mul\((\d{1,3}),(\d{1,3})\)""".toRegex().findAll(input)
         val response = matches.sumOf { match ->
-            val numbers = match.value
-                .removePrefix("mul(")
-                .removeSuffix(")")
-                .split(",")
-                .map { it.toInt() }
-            numbers[0] * numbers[1]
+            val (first, second) = match.destructured
+            first.toInt() * second.toInt()
         }
         return response
     }
 
     fun part2(input: String): Int {
         var multiply = true
-        val matches = "(?<=^|\\W|)(mul\\(\\d{1,3},\\d{1,3}\\)|do\\(\\)|don['’]?t\\(\\))".toRegex().findAll(input)
+        val matches = """mul\((\d{1,3}),(\d{1,3})\)|do\(\)|don't\(\)""".toRegex().findAll(input)
         val response = matches.sumOf { match ->
             var summing = 0
-            when {
-                match.value.startsWith("mul(") -> {
-                    val numbers = match.value
-                        .removePrefix("mul(")
-                        .removeSuffix(")")
-                        .split(",")
-                        .map { it.toInt() }
+            when (match.value) {
+                "do()" -> multiply = true
+                "don't()" -> multiply = false
+                else -> {
+                    val (first, second) = match.destructured
                     if (multiply) {
-                        summing = numbers[0] * numbers[1]
+                        summing = first.toInt() * second.toInt()
                     }
-
-                }
-
-                match.value == "do()" -> {
-                    multiply = true
-                }
-
-                match.value == "don't()" -> {
-                    multiply = false
                 }
             }
             summing
