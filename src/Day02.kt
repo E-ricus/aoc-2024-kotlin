@@ -22,21 +22,20 @@ fun main() {
         return input.map { l ->
             val level = l.split(" ").map { it.toInt() }
             var safe = false
-            for(i in 0..level.lastIndex) {
+            for (i in 0..level.lastIndex) {
                 val changedLevel = level.toMutableList().apply { removeAt(i) }
                 safe = levelIsSafe(changedLevel)
-                if(safe) break
+                if (safe) break
             }
             safe
         }.count { it }
     }
 
-    val testInput = readInput("test/Day02")
-    part1(testInput).println()
+    val testInput = readInputByLines("test/Day02")
     check(part1(testInput) == 2)
     check(part2(testInput) == 4)
 
-    val input = readInput("input/Day02")
+    val input = readInputByLines("input/Day02")
     part1(input).printResult("Part 1")
     part2(input).printResult("Part 2")
 }
