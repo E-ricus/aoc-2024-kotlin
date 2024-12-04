@@ -1,152 +1,66 @@
 fun main() {
     val word = "XMAS"
-    fun transposeMatrix(matrix: List<String>): List<String> {
-        val maxLength = matrix.maxOf { it.length }
-        val charMatrix = matrix.map { it.padEnd(maxLength).toList() }
+    fun checkDiagonals(i: Int, j: Int, input: List<String>, diagonals: List<Char>): Boolean {
+        val directions = listOf(
+            Pair(-1, -1), // Top-left
+            Pair(1, -1),  // Bottom-left
+            Pair(-1, 1),  // Top-right
+            Pair(1, 1)    // Bottom-right
+        )
 
-        val transposed = List(maxLength) { colIndex ->
-            charMatrix.map { it[colIndex] }.joinToString("")
+        return directions.indices.all { index ->
+            val (di, dj) = directions[index]
+            val x = i + di
+            val y = j + dj
+            x in input.indices && y in input[x].indices && input[x][y] == diagonals[index]
         }
-
-        return transposed
-    }
-
-    fun String.countSubstrings(): Int {
-        var count = 0
-        var index = this.indexOf(word)
-        while (index != -1) {
-            count++
-            index = this.indexOf(word, index + 1)
-        }
-        return count
-    }
-
-    fun Char.validateChar(count: Int): Boolean {
-        return when (count) {
-            1 -> this == 'X'
-            2 -> this == 'M'
-            3 -> this == 'A'
-            4 -> this == 'S'
-            else -> false
-        }
-    }
-
-    fun countDiagonal(input: List<String>): Int {
-        var diagonal = 0
-        for (i in input.indices) {
-            val chars = input[i].toCharArray()
-            for (j in chars.indices) {
-                var c = chars[j]
-                var count = 1
-                while (c.validateChar(count)) {
-                    when {
-                        count == 4 -> {
-                            diagonal++
-                            break
-                        }
-
-                        i + count == input.size || j + count == input[i + count].length -> break
-                    }
-                    c = input[i + count].toCharArray()[j + count]
-                    count++
-                }
-                c = chars[j]
-                count = 1
-                while (c.validateChar(count)) {
-                    when {
-                        count == 4 -> {
-                            diagonal++
-                            break
-                        }
-
-                        i + count == input.size || j - count < 0 -> break
-                    }
-                    c = input[i + count].toCharArray()[j - count]
-                    count++
-                }
-                c = chars[j]
-                count = 1
-                while (c.validateChar(count)) {
-                    when {
-                        count == 4 -> {
-                            diagonal++
-                            break
-                        }
-
-                        i - count < 0 || j + count == input[i - count].length -> break
-                    }
-                    c = input[i - count].toCharArray()[j + count]
-                    count++
-                }
-                c = chars[j]
-                count = 1
-                while (c.validateChar(count)) {
-                    when {
-                        count == 4 -> {
-                            diagonal++
-                            break
-                        }
-
-                        i - count < 0 || j - count < 0 -> break
-                    }
-                    c = input[i - count].toCharArray()[j - count]
-                    count++
-                }
-            }
-        }
-        return diagonal
     }
 
     fun part1(input: List<String>): Int {
-        val horizontal = input.sumOf {
-            it.countSubstrings() + it.reversed().countSubstrings()
+        val directions = listOf(
+            Pair(0, 1),   // Horizontal (right)
+            Pair(1, 0),   // Vertical (down)
+            Pair(0, -1),   // Horizontal (left)
+            Pair(-1, 0),   // Vertical (up)
+            Pair(1, 1),   // Diagonal (down-right)
+            Pair(1, -1),   // Diagonal (down-left)
+            Pair(-1, 1),   // Diagonal (up-right)
+            Pair(-1, -1)   // Diagonal (uo-left)
+        )
+
+        var totalCount = 0
+
+        for (i in input.indices) {
+            for (j in input[i].indices) {
+                for ((di, dj) in directions) {
+                    var potential = ""
+                    for (k in word.indices) {
+                        val x = i + k * di
+                        val y = j + k * dj
+                        if (x !in input.indices || y !in input[x].indices) break
+                        potential += input[x][y]
+                    }
+                    if (potential == word) totalCount++
+                }
+            }
         }
-        val transposed = transposeMatrix(input)
-        val vertical = transposed.sumOf {
-            it.countSubstrings() + it.reversed().countSubstrings()
-        }
-        val diagonal = countDiagonal(input)
-        return horizontal + vertical + diagonal
+
+        return totalCount
     }
 
     fun part2(input: List<String>): Int {
         var count = 0
+        val diagonals = listOf(
+            listOf('M', 'M', 'S', 'S'),
+            listOf('S', 'M', 'S', 'M'),
+            listOf('M', 'S', 'M', 'S'),
+            listOf('S', 'S', 'M', 'M'),
+        )
+
         for (i in input.indices) {
-            val chars = input[i].toCharArray()
-            for (j in chars.indices) {
-                val c = chars[j]
-                if (c == 'A') {
-                    var leftUp = (i - 1 >= 0 && j - 1 >= 0 && input[i - 1].toCharArray()[j - 1] == 'M')
-                    var leftDown = (i + 1 < input.size && j - 1 >= 0 && input[i + 1].toCharArray()[j - 1] == 'M')
-                    var rightDown =
-                        (i + 1 < input.size && j + 1 < input[i + 1].length && input[i + 1].toCharArray()[j + 1] == 'S')
-                    var rightUp =
-                        (i - 1 >= 0 && j + 1 < input[i - 1].length && input[i - 1].toCharArray()[j + 1] == 'S')
-                    if (leftUp && leftDown && rightUp && rightDown) count++
-
-                    leftUp = (i - 1 >= 0 && j - 1 >= 0 && input[i - 1].toCharArray()[j - 1] == 'S')
-                    leftDown = (i + 1 < input.size && j - 1 >= 0 && input[i + 1].toCharArray()[j - 1] == 'M')
-                    rightDown =
-                        (i + 1 < input.size && j + 1 < input[i + 1].length && input[i + 1].toCharArray()[j + 1] == 'M')
-                    rightUp =
-                        (i - 1 >= 0 && j + 1 < input[i - 1].length && input[i - 1].toCharArray()[j + 1] == 'S')
-                    if (leftUp && leftDown && rightUp && rightDown) count++
-
-                    leftUp = (i - 1 >= 0 && j - 1 >= 0 && input[i - 1].toCharArray()[j - 1] == 'M')
-                    leftDown = (i + 1 < input.size && j - 1 >= 0 && input[i + 1].toCharArray()[j - 1] == 'S')
-                    rightDown =
-                        (i + 1 < input.size && j + 1 < input[i + 1].length && input[i + 1].toCharArray()[j + 1] == 'S')
-                    rightUp =
-                        (i - 1 >= 0 && j + 1 < input[i - 1].length && input[i - 1].toCharArray()[j + 1] == 'M')
-                    if (leftUp && leftDown && rightUp && rightDown) count++
-
-                    leftUp = (i - 1 >= 0 && j - 1 >= 0 && input[i - 1].toCharArray()[j - 1] == 'S')
-                    leftDown = (i + 1 < input.size && j - 1 >= 0 && input[i + 1].toCharArray()[j - 1] == 'S')
-                    rightDown =
-                        (i + 1 < input.size && j + 1 < input[i + 1].length && input[i + 1].toCharArray()[j + 1] == 'M')
-                    rightUp =
-                        (i - 1 >= 0 && j + 1 < input[i - 1].length && input[i - 1].toCharArray()[j + 1] == 'M')
-                    if (leftUp && leftDown && rightUp && rightDown) count++
+            for (j in input[i].indices) {
+                if (input[i][j] == 'A') {
+                    count += diagonals.count { checkDiagonals(i, j, input, it) }
                 }
             }
         }
@@ -154,8 +68,8 @@ fun main() {
     }
 
     val testInput = readInputByLines("test/Day04")
+    part1(testInput).println()
     check(part1(testInput) == 18)
-    part2(testInput).println()
     check(part2(testInput) == 9)
 
     val input = readInputByLines("input/Day04")
