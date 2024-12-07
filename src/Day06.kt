@@ -9,10 +9,9 @@ fun main() {
     fun escapeMap(
         currentPosition: CurrentPosition,
         visited: MutableSet<Pair<Int, Int>>,
-        obstructions: List<Pair<Int, Int>>,
+        obstructions: Set<Pair<Int, Int>>,
         sizeI: Int,
-        sizeJ: Int,
-        newObs: Pair<Int, Int>? = null,
+        sizeJ: Int
     ): Boolean {
         val directionOffsets = mapOf(
             Direction.NORTH to (-1 to 0),
@@ -35,13 +34,8 @@ fun main() {
             Direction.EAST to Direction.SOUTH
         )
 
-        var obstructions = obstructions
-
-        if (newObs != null) {
-            obstructions = obstructions + newObs
-        }
-        val visitedObstructions: MutableMap<Pair<Int, Int>, Direction> = mutableMapOf()
-        ins@ while (true) {
+        val visitedObstructions = mutableSetOf<Pair<Pair<Int, Int>, Direction>>()
+        while (true) {
             val offset = directionOffsets[currentPosition.direction] ?: error("Invalid direction")
             val checkBoundary = boundaryCheck[currentPosition.direction] ?: error("Invalid direction")
 
@@ -49,52 +43,48 @@ fun main() {
 
             while (newPosition !in obstructions) {
                 if (!checkBoundary(newPosition)) {
-                    break@ins
+                    return true // Escaped
                 }
-                if (checkBoundary(newPosition)) {
-                    visited.add(newPosition)
-                }
+                visited.add(newPosition)
                 newPosition = newPosition.first + offset.first to newPosition.second + offset.second
             }
 
-            // Potential loops
-            val possibleLoop = visitedObstructions.put(newPosition, currentPosition.direction)
-            if (possibleLoop == currentPosition.direction && newObs != null) {
+            // Check for loops
+            val obstructionKey = newPosition to currentPosition.direction
+            if (!visitedObstructions.add(obstructionKey)) {
                 return false
             }
-//
+
             // Move back one step to the last valid position
             currentPosition.i = newPosition.first - offset.first
             currentPosition.j = newPosition.second - offset.second
             // Change direction
             currentPosition.direction = nextDirection[currentPosition.direction] ?: error("Invalid direction")
         }
-
-        return true
     }
 
 
     fun part1(input: List<String>): Int {
         val sizeI = input.size
         val sizeJ = input.first().length
-        var firstPosition: CurrentPosition? = null
-        val obstructions = input.mapIndexed { i, line ->
-            line.mapIndexed { j, pos ->
-                if (pos == '^') {
-                    firstPosition = CurrentPosition(Direction.NORTH, i, j)
-                }
-                if (pos == '#') {
-                    i to j
-                } else {
-                    -1 to -1
-                }
+        var firstPosition = CurrentPosition(Direction.NORTH, 0, 0)
+        val obstructions = input.flatMapIndexed { i, line ->
+            line.mapIndexedNotNull { j, pos ->
+                when (pos) {
+                    '^' -> {
+                        firstPosition = CurrentPosition(Direction.NORTH, i, j)
+                        null
+                    }
 
+                    '#' -> i to j
+                    else -> null
+                }
             }
-        }.map { it.filterNot { it == (-1 to -1) } }.flatten()
-        val currentPosition = firstPosition!!
+        }.toSet()
+
         val visited: MutableSet<Pair<Int, Int>> = mutableSetOf()
 
-        val escaped = escapeMap(currentPosition, visited, obstructions, sizeI, sizeJ)
+        val escaped = escapeMap(firstPosition, visited, obstructions, sizeI, sizeJ)
         check(escaped)
         return visited.size
     }
@@ -103,28 +93,29 @@ fun main() {
         val sizeI = input.size
         val sizeJ = input.first().length
         var firstPosition = CurrentPosition(Direction.NORTH, 0, 0)
-        val obstructions = input.mapIndexed { i, line ->
-            line.mapIndexed { j, pos ->
-                if (pos == '^') {
-                    firstPosition = CurrentPosition(Direction.NORTH, i, j)
-                }
-                if (pos == '#') {
-                    i to j
-                } else {
-                    -1 to -1
-                }
+        val obstructions = input.flatMapIndexed { i, line ->
+            line.mapIndexedNotNull { j, pos ->
+                when (pos) {
+                    '^' -> {
+                        firstPosition = CurrentPosition(Direction.NORTH, i, j)
+                        null
+                    }
 
+                    '#' -> i to j
+                    else -> null
+                }
             }
-        }.map { it.filterNot { it == (-1 to -1) } }.flatten()
+        }.toSet()
+
         var loops = 0
+
         for (i in input.indices) {
             for (j in input[i].indices) {
-                // Skip obstacles and player
                 if (input[i][j] != '.') continue
                 val newObs = i to j
                 val currentPosition = firstPosition.copy()
                 val visited: MutableSet<Pair<Int, Int>> = mutableSetOf()
-                val escaped = escapeMap(currentPosition, visited, obstructions, sizeI, sizeJ, newObs)
+                val escaped = escapeMap(currentPosition, visited, obstructions + newObs, sizeI, sizeJ)
                 if (!escaped) {
                     loops++
                 }
