@@ -6,19 +6,17 @@ fun main() {
 
         val nextIndex = index + 1
         val nextValue = nums[nextIndex]
-        when (useCombinator) {
+        return when (useCombinator) {
             true -> {
                 val concatenatedValue = (currentValue.toString() + nextValue.toString()).toLong()
-
-                return evaluate(nums, nextIndex, currentValue + nextValue, target, true) ||
+                evaluate(nums, nextIndex, currentValue + nextValue, target, true) ||
                         evaluate(nums, nextIndex, currentValue * nextValue, target, true) ||
                         evaluate(nums, nextIndex, concatenatedValue, target, true)
 
             }
 
             false -> {
-
-                return evaluate(nums, nextIndex, currentValue + nextValue, target, false) ||
+                evaluate(nums, nextIndex, currentValue + nextValue, target, false) ||
                         evaluate(nums, nextIndex, currentValue * nextValue, target, false)
 
             }
