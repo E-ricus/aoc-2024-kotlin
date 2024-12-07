@@ -1,3 +1,8 @@
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import java.util.concurrent.atomic.AtomicInteger
+
 enum class Direction {
     NORTH, SOUTH, WEST, EAST
 }
@@ -21,9 +26,9 @@ fun main() {
         )
 
         val boundaryCheck = mapOf(
-            Direction.NORTH to { pos: Pair<Int, Int> -> pos.first > 0 },
+            Direction.NORTH to { pos: Pair<Int, Int> -> pos.first >= 0 },
             Direction.SOUTH to { pos: Pair<Int, Int> -> pos.first < sizeI },
-            Direction.WEST to { pos: Pair<Int, Int> -> pos.second > 0 },
+            Direction.WEST to { pos: Pair<Int, Int> -> pos.second >= 0 },
             Direction.EAST to { pos: Pair<Int, Int> -> pos.second < sizeJ }
         )
 
@@ -45,8 +50,8 @@ fun main() {
                 if (!checkBoundary(newPosition)) {
                     return true // Escaped
                 }
-                visited.add(newPosition)
                 newPosition = newPosition.first + offset.first to newPosition.second + offset.second
+                if (checkBoundary(newPosition) && newPosition !in obstructions) visited.add(newPosition)
             }
 
             // Check for loops
@@ -107,21 +112,30 @@ fun main() {
             }
         }.toSet()
 
-        var loops = 0
+        val loops = AtomicInteger(0)
+        val normalVisited: MutableSet<Pair<Int, Int>> = mutableSetOf()
+        escapeMap(firstPosition.copy(), normalVisited, obstructions, sizeI, sizeJ)
 
-        for (i in input.indices) {
-            for (j in input[i].indices) {
-                if (input[i][j] != '.') continue
-                val newObs = i to j
-                val currentPosition = firstPosition.copy()
-                val visited: MutableSet<Pair<Int, Int>> = mutableSetOf()
-                val escaped = escapeMap(currentPosition, visited, obstructions + newObs, sizeI, sizeJ)
-                if (!escaped) {
-                    loops++
+        // Coroutine improvement taken from Jetbrains livestream
+        runBlocking(Dispatchers.Default) {
+            for (i in input.indices) {
+                for (j in input[i].indices) {
+                    if (input[i][j] != '.' || (i to j) !in normalVisited) continue
+                    launch {
+                        val newObs = i to j
+                        val currentPosition = firstPosition.copy()
+                        val visited: MutableSet<Pair<Int, Int>> = mutableSetOf()
+                        val escaped = escapeMap(currentPosition, visited, obstructions + newObs, sizeI, sizeJ)
+                        if (!escaped) {
+                            loops.incrementAndGet()
+                        }
+
+                    }
                 }
             }
+
         }
-        return loops
+        return loops.toInt()
     }
 
     val testInput = readInputByLines("test/Day06")
