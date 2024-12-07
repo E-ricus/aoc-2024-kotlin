@@ -1,31 +1,33 @@
+// Operators as data object: Taken from Jetbrains stream
+sealed interface Operator : (Long, Long) -> Long
+data object Add : Operator {
+    override fun invoke(a: Long, b: Long): Long = a + b
+}
+
+data object Multiply : Operator {
+    override fun invoke(a: Long, b: Long): Long = a * b
+}
+
+data object Concat : Operator {
+    override fun invoke(a: Long, b: Long): Long = "$a$b".toLong()
+}
+
 fun main() {
-    fun evaluate(nums: List<Long>, index: Int, currentValue: Long, target: Long, useCombinator: Boolean): Boolean {
-        if (index == nums.lastIndex) {
-            return currentValue == target
-        }
+    fun evaluate(nums: List<Long>, index: Int, currentValue: Long, target: Long, operators: List<Operator>): Boolean {
+        if (index == nums.lastIndex) return currentValue == target
+        if (currentValue > target) return false
 
         val nextIndex = index + 1
         val nextValue = nums[nextIndex]
-        return when (useCombinator) {
-            true -> {
-                val concatenatedValue = (currentValue.toString() + nextValue.toString()).toLong()
-                evaluate(nums, nextIndex, currentValue + nextValue, target, true) ||
-                        evaluate(nums, nextIndex, currentValue * nextValue, target, true) ||
-                        evaluate(nums, nextIndex, concatenatedValue, target, true)
-
-            }
-
-            false -> {
-                evaluate(nums, nextIndex, currentValue + nextValue, target, false) ||
-                        evaluate(nums, nextIndex, currentValue * nextValue, target, false)
-
-            }
+        return operators.any { op ->
+            evaluate(nums, nextIndex, op(currentValue, nextValue), target, operators)
         }
     }
 
-    fun isTarget(nums: List<Long>, target: Long, useCombinator: Boolean): Boolean {
+    fun isTarget(nums: List<Long>, target: Long, useConcat: Boolean): Boolean {
         if (nums.isEmpty()) return false
-        return evaluate(nums, 0, nums.first(), target, useCombinator)
+        val operators = if (useConcat) listOf(Add, Multiply, Concat) else listOf(Add, Multiply)
+        return evaluate(nums, 0, nums.first(), target, operators)
     }
 
     fun part1(input: List<String>): Long {
