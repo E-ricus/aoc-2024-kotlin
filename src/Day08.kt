@@ -1,14 +1,14 @@
 fun main() {
-    fun getAntennas(input: List<String>): Map<Char, Set<Pair<Int, Int>>> {
-        val antennas = input.flatMapIndexed { i, line ->
+    fun getAntennas(input: List<String>): List<Set<Pair<Int, Int>>> {
+        return input.flatMapIndexed { i, line ->
             line.mapIndexedNotNull { j, c ->
                 if (c == '.') null else c to (i to j)
             }
         }.groupBy(
             keySelector = { it.first },
             valueTransform = { it.second }
-        ).mapValues { it.value.toSet() }
-        return antennas
+        ).values.filter { it.size > 1 }
+            .map { it.toSet() }
     }
 
     fun part1(input: List<String>): Int {
@@ -18,7 +18,7 @@ fun main() {
         val verticalRange = input.indices
         val horizontalRange = input[0].indices
 
-        val antinodes: Set<Pair<Int, Int>> = antennas.values.flatMap { antenna ->
+        val antinodes: Set<Pair<Int, Int>> = antennas.flatMap { antenna ->
             antenna.flatMap { a ->
                 // Attempt of combinator
                 antenna.asSequence()
@@ -42,7 +42,7 @@ fun main() {
         val verticalRange = input.indices
         val horizontalRange = input[0].indices
 
-        val antinodes: Set<Pair<Int, Int>> = antennas.values.flatMap { antenna ->
+        val antinodes: Set<Pair<Int, Int>> = antennas.flatMap { antenna ->
             antenna.flatMap { a ->
                 // Attempt of combinator
                 antenna.asSequence()
@@ -65,7 +65,7 @@ fun main() {
             }
         }.toSet() // Ensure distinct antinodes across all antennas
         // I don't get why the antennas like this are antinodes, but I won't argue
-        val finalAntinodes = antennas.values.filter { it.size > 1 }.flatten().toSet() + antinodes
+        val finalAntinodes = antennas.flatten().toSet() + antinodes
         return finalAntinodes.size
     }
 
